@@ -45,7 +45,9 @@ can be accomplished with this workspace:
 * Roll back and installation from a previously backed up version
 
 This workspace is intended to serve as a trivial example of concepts that can be utilized for much more complex build and deployment
-scenarios. 
+scenarios. This template can be copied and modified as necessary to realize your requirements. For example, a Java build
+and the Java code may not be needed in your workspace, you may only want to fetch dependencies from Maven and include them
+in your archive along with all your configurations, scripts, binaries etc. for your installation.
 
 == Prerequisites
 
