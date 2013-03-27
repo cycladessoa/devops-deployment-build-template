@@ -42,7 +42,7 @@ import org.cyclades.engine.util.TransactionIdentifier
 import org.cyclades.client.DevOps
 
 task deploy () {
-    description = 'Upload and install this deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs'
+    description = 'Upload, install and test this deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs'
     doLast () {
         uploadArchive()
         deployArchive()
@@ -64,7 +64,7 @@ def deployArchive () {
 }
 
 task rollBack () {
-    description = 'Roll back a previously installed deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs. NOTE: You must specify the property "backup_tid" with the tid value from a previously run "backup" task: -Pbackup_tid=xxx'
+    description = 'Roll back and test a previously installed deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs. NOTE: You must specify the property "backup_tid" with the tid value from a previously run "backup" task: -Pbackup_tid=xxx'
     doLast () {
         String faultStrategy = (exit_on_failure.equalsIgnoreCase("true")) ? "EXCEPTION" : "NOTHING";
         String tid = new TransactionIdentifier(transaction_identifier_prefix).getTransactionID()
