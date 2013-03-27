@@ -58,7 +58,8 @@ and enter the correct Cyclades URL/s for your target machine/s. You can specify 
 separated list of Cyclades Service Engine URLs.
 
 You will need to have Gradle installed on the machine that you run this example from. You will also need to have Java installed
-to get a successful response from the test phase of the installation orchestration (though the build will still work).
+to get a successful response from the test phase of the installation orchestration (though the build will still work without 
+it, it will simply fail during the test phase of the installation orchestration).
 
 [NOTE]
 Please see https://github.com/cycladessoa/cyclades-deployment to deploy a default Cyclades Service Engine installation.
