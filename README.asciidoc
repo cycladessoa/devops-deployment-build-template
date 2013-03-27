@@ -80,7 +80,7 @@ Please see https://github.com/cycladessoa/cyclades-deployment to deploy a defaul
     ** Roll back and test a previously installed deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs. NOTE: You must specify the property "backup_tid" with the tid value from a previously run "backup" task: -Pbackup_tid=xxx
 
 [NOTE]
-The command "gradle tasks" will display all of the available tasks of a Gradle build workspace...however the above tasks apply directly to this example
+The command "gradle tasks" will display all of the available tasks of a Gradle build workspace...however the above tasks apply directly to this example.
 A deployment build command typically start with "gradle clean build" so that the assembled deployment artifact (archive) is current. 
 Exceptions will be if and when "gradle backup" and "gradle rollBack" are run alone. 
 
