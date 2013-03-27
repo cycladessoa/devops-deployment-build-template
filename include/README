@@ -1,0 +1,2 @@
+- Everything in this directory will be included in the generated archive
+- The "lib" directory will be populated with any libraries or artifacts declared in the build file

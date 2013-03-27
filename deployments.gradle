@@ -1,0 +1,171 @@
+/*******************************************************************************
+ * Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *    Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *    Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *    Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *******************************************************************************/
+buildscript {
+        repositories {
+                mavenCentral()
+        }
+
+        dependencies {
+                classpath group:'com.github.cycladessoa.nyxlets', name:'servicebroker', version:'latest.integration'
+        }
+}
+
+import org.cyclades.engine.stroma.xstroma.XSTROMARequestBuilder
+import org.cyclades.engine.stroma.xstroma.STROMARequestBuilder
+import org.cyclades.engine.stroma.xstroma.XSTROMABrokerRequest
+import org.cyclades.engine.util.TransactionIdentifier
+import org.cyclades.client.DevOps
+
+task deploy () {
+    description = 'Upload and install this deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs'
+    doLast () {
+        uploadArchive()
+        deployArchive()
+    }
+}
+
+def uploadArchive () {
+    String faultStrategy = (exit_on_failure.equalsIgnoreCase("true")) ? "EXCEPTION" : "NOTHING";
+    String password = (rootProject.hasProperty('admin_service_password')) ? admin_service_password : null
+    DevOps.uploadFIleToCluster(node_list.split("[,]"), password, source_archive_upload_path, target_node_archive_installation_path, true, faultStrategy, true)
+}
+
+def deployArchive () {
+    String faultStrategy = (exit_on_failure.equalsIgnoreCase("true")) ? "EXCEPTION" : "NOTHING";
+    String tid = new TransactionIdentifier(transaction_identifier_prefix).getTransactionID()
+    displayRunMessage(tid)
+    DevOps.executeClusteredXSTROMARequests(node_list.split("[,]"), generateDeploymentRequests(tid,
+        (rootProject.hasProperty('target_node_source_download_path')) ? target_node_source_download_path : null), faultStrategy, true)
+}
+
+task rollBack () {
+    description = 'Roll back a previously installed deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs. NOTE: You must specify the property "backup_tid" with the tid value from a previously run "backup" task: -Pbackup_tid=xxx'
+    doLast () {
+        String faultStrategy = (exit_on_failure.equalsIgnoreCase("true")) ? "EXCEPTION" : "NOTHING";
+        String tid = new TransactionIdentifier(transaction_identifier_prefix).getTransactionID()
+        displayRunMessage(tid)
+        DevOps.executeClusteredXSTROMARequests(node_list.split("[,]"), generateDeploymentRequests(tid, target_node_backup_path + "." + backup_tid + ".zip"), 
+            faultStrategy, true)
+    }
+}
+
+def generateDeploymentRequests (tid, targetNodeSourceDownloadPath) {
+    List<XSTROMABrokerRequest> cycladesSOARequests = new ArrayList<XSTROMABrokerRequest>()
+    XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newInstance(null)
+    
+    // Add X-STROMA level parameters
+    xstromaBuilder
+    .parameter("transaction-data", tid.toString())
+    .parameter("duration", "true")
+    .parameter("service-agent", "true")
+    .parameter("enable-orchestration-fault", "true")
+    .json()
+
+    if (rootProject.hasProperty('admin_service_password')) xstromaBuilder.parameter("password", admin_service_password)
+
+    if (targetNodeSourceDownloadPath != null) {
+        xstromaBuilder.add(
+            STROMARequestBuilder.newInstance("admin")
+            .parameter("action", "add")
+            .parameter("source", targetNodeSourceDownloadPath)
+            .parameter("uri", target_node_archive_installation_path)
+        )
+    }
+
+    // Extract installation file
+    xstromaBuilder.add(
+        STROMARequestBuilder.newInstance("admin")
+        .parameter("action", "unzipdirectory")
+        .parameter("source", target_node_archive_installation_path)
+        .parameter("uri", target_node_archive_extraction_path)
+    )
+
+    // Delete installation artifacts
+    if (rootProject.hasProperty('delete_target_node_archive_artifacts') && delete_target_node_archive_artifacts.equalsIgnoreCase("true")) {
+        xstromaBuilder.add(
+            STROMARequestBuilder.newInstance("admin")
+            .parameter("action", "delete")
+            .parameter("uri", target_node_archive_installation_path)
+        )
+    }
+
+    // Test the installation
+    xstromaBuilder.add(
+        STROMARequestBuilder.newInstance("exec")
+        .parameter("action", "exec")
+        .parameter("working-directory", target_node_archive_extraction_path)
+        .parameter("command", "java -classpath \"libs/devops-deployment-build-template.jar" + File.pathSeparatorChar+ "libs/json.jar\" HelloWorld message.json")
+        .parameter("valid-exit-code", "0")
+        .parameter("output", "true")
+        .parameter("command-in-response", "true")
+        .parameter("password", (rootProject.hasProperty('exec_service_password')) ? exec_service_password : "")
+    )
+
+    cycladesSOARequests.add(xstromaBuilder.build())
+    return cycladesSOARequests
+}
+
+task backup () {
+    description = 'Backup the current installation remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs'
+    doLast () {
+        String faultStrategy = (exit_on_failure.equalsIgnoreCase("true")) ? "EXCEPTION" : "NOTHING";
+        String tid = new TransactionIdentifier(transaction_identifier_prefix).getTransactionID()
+        displayRunMessage(tid)
+        DevOps.executeClusteredXSTROMARequests(node_list.split("[,]"), generateBackupRequests(tid), faultStrategy, true)
+    }
+}
+
+def generateBackupRequests (tid) {
+    List<XSTROMABrokerRequest> cycladesSOARequests = new ArrayList<XSTROMABrokerRequest>()
+    XSTROMARequestBuilder xstromaBuilder = XSTROMARequestBuilder.newInstance(null)
+
+    // Add X-STROMA level parameters
+    xstromaBuilder
+    .parameter("transaction-data", tid.toString())
+    .parameter("duration", "true")
+    .parameter("service-agent", "true")
+    .parameter("enable-orchestration-fault", "true")
+    .json()
+
+    if (rootProject.hasProperty('admin_service_password')) xstromaBuilder.parameter("password", admin_service_password)
+
+    // Archive the base installation directory
+    xstromaBuilder.add(
+        STROMARequestBuilder.newInstance("admin")
+        .parameter("action", "zipdirectory")
+        .parameter("source", target_node_archive_extraction_path)
+        .parameter("uri", target_node_backup_path+ "." + tid + ".zip")
+    )
+
+    cycladesSOARequests.add(xstromaBuilder.build())
+    return cycladesSOARequests
+}
+
+def displayRunMessage (tid) {
+    println "\nSubmitting jobs with transaction id: ${tid}"
+}

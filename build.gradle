@@ -1,0 +1,108 @@
+/*******************************************************************************
+ * Copyright (c) 2012, THE BOARD OF TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ *    Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *    Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *    Neither the name of the STANFORD UNIVERSITY nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *******************************************************************************/
+repositories {
+    mavenCentral()
+}
+
+buildscript {
+        repositories {
+                mavenCentral()
+        }
+
+        dependencies {
+                classpath group:'com.github.cycladessoa.nyxlets', name:'servicebroker', version:'latest.integration'
+        }
+}
+
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'checkstyle'
+
+apply from: 'deployments.gradle'
+
+version = build_version 
+
+// Output a jar file without a version (Easier for scripts to reference jar files names that do not change)
+jar.version=''
+jar.doFirst() {
+    manifest {
+        attributes 'Main-Class': 'HelloWorld'
+        attributes 'Built-With': 'gradle-' + GradleVersion.current()
+        attributes 'Built-By': System.getProperty('user.name')
+    }
+}
+
+// This will be the base name of the archive..the version will be appended by Gradle
+archivesBaseName = 'devops-deployment-build-template'
+
+// This will be the base directory within the archive
+def archiveBaseDirName = '/'
+
+dependencies {
+    compile group: 'junit',            name: 'junit', version: '4.8.2'
+    compile group: 'org.json',         name: 'json',  version: '20090211'
+}
+
+/***********************************************************/
+/*  This section is for packaging the archive file distro  */
+/*  that we would like to push                             */
+/***********************************************************/
+
+task copyInclude(type: Copy) {
+    from "include"
+    into "${buildDir}/include"
+}
+
+task copyLocalLibs(type: Copy) {
+    from "${buildDir}/libs"
+    into "${buildDir}/include/libs"
+}
+
+task copyDependencies(type: Copy) {
+    from configurations.runtime
+    into "${buildDir}/include/libs"
+    // Output jar files without versions (Easier for scripts to reference jar files names that do not change names)
+    // Simply comment the following lines out if you wish to keep the versions in the file names
+    java.util.Map<String, String> nameToVersionMap = new java.util.HashMap<String, String>()
+    configurations.runtime.allDependencies.each { dep -> nameToVersionMap.put(new String("${dep.name}-${dep.version}"), new String("${dep.version}")) }
+    rename { it.substring(0, it.lastIndexOf('-' + nameToVersionMap.get(it.substring(0, it.lastIndexOf("."))))) + it.substring(it.lastIndexOf("."), it.size()) }
+}
+
+task zip(type: Zip) {
+    from "${buildDir}/include"
+    into archiveBaseDirName
+}
+
+copyLocalLibs.dependsOn(copyInclude)
+copyDependencies.dependsOn(copyLocalLibs)
+zip.dependsOn(copyDependencies)
+assemble.dependsOn(zip)
+
+/***********************************************************/
+/***********************************************************/
+/***********************************************************/
