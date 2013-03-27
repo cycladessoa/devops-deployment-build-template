@@ -86,15 +86,21 @@ Exceptions will be if and when "gradle backup" and "gradle rollBack" are run alo
 
 === Build, deploy, install and test the artifacts on the designated nodes/servers
 
+----
 gradle clean build deploy
+----
 
 === Build, backup, deploy, install and test the artifacts on the designated nodes/servers (a previous installation must be present for a "backup" task to succeed, otherwise it will throw an error)
 
+----
 gradle clean build backup deploy
+----
 
 === To roll back a to a previously backed up deployment (you must specifiy the tid of a previous "backup" execution as the command line property "backup_tid")
 
+----
 gradle -Pbackup_tid=DEVOPS-DEPLOYMENT-BUILD-CLIENT-HOST-NAME-1364336231693 rollBack
+----
 
 [NOTE]
 The "backup_tid" value is diplayed by the "backup" task every time it is run. You can try running "gradle backup" alone to test this feature.
