@@ -65,7 +65,7 @@ Please see https://github.com/cycladessoa/cyclades-deployment to deploy a defaul
 
 == Instructions/Examples
 
-.Gradle Tasks
+. Gradle Tasks
 * clean
     ** Deletes the build directory
 * build
