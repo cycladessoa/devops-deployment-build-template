@@ -74,9 +74,9 @@ Please see https://github.com/cycladessoa/cyclades-deployment to deploy a defaul
 * backup
     ** Backup the current installation remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs
 * deploy
-    ** Upload and install this deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs
+    ** Upload, install and test this deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs
 * rollBack
-    ** Roll back a previously installed deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs. NOTE: You must specify the property "backup_tid" with the tid value from a previously run "backup" task: -Pbackup_tid=xxx
+    ** Roll back and test a previously installed deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs. NOTE: You must specify the property "backup_tid" with the tid value from a previously run "backup" task: -Pbackup_tid=xxx
 
 [NOTE]
 The command "gradle tasks" will display all of the available tasks of a Gradle build workspace...however the above tasks apply directly to this example
