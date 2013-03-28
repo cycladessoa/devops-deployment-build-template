@@ -40,9 +40,9 @@ can be accomplished with this workspace:
 * Build and archive a sample Java application along with library dependencies, configuration files and any other resources provided in the "include" directory
 * Deploy the archive to designated remote nodes/servers
 * Install the artifacts on the remote nodes/servers
-* Test/verify the installations, both for deployment and roll back 
-* Back up a previous installation
-* Roll back and installation from a previously backed up version
+* Test/verify the installations remotely, both for deployment and roll back 
+* Back up a previous installation on the remote nodes/servers
+* Roll back an installation from a previously backed up version on the remote nodes/servers
 
 This workspace is intended to serve as a trivial example of concepts that can be utilized for much more complex build and deployment
 scenarios. This template can be copied and modified as necessary to realize your requirements. For example, a Java build
