@@ -26,8 +26,8 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 OF THE POSSIBILITY OF SUCH DAMAGE.
 ////////////////////////////////////////////////////////////////////////////////
 
-A sample DevOps deployment build that builds, packages, backs up, deploys and rolls back this workspace on one to N remote nodes
-running the default installation of the Cyclades Service Engine.
+A sample *DevOps orchestration/deployment build* (Gradle workspace) that builds, packages, backs up, deploys, tests and rolls back the artifacts
+produced in this workspace on one to N remote nodes running the default installation of the Cyclades Service Engine.
 
 [NOTE]
 Please see https://github.com/cycladessoa/cyclades-deployment to deploy a default Cyclades Service Engine installation.
@@ -40,31 +40,39 @@ can be accomplished with this workspace:
 * Build and archive a sample Java application along with library dependencies, configuration files and any other resources provided in the "include" directory
 * Deploy the archive to designated remote nodes/servers
 * Install the artifacts on the remote nodes/servers
-* Test/verify the installations, both for deployment and roll back 
-* Back up a previous installation
-* Roll back and installation from a previously backed up version
+* Test/verify the installations remotely, both for deployment and roll back 
+* Back up a previous installation on the remote nodes/servers
+* Roll back an installation from a previously backed up version on the remote nodes/servers
 
 This workspace is intended to serve as a trivial example of concepts that can be utilized for much more complex build and deployment
-scenarios. 
+scenarios. This template can be copied and modified as necessary to realize your requirements. For example, a Java build
+and the Java code may not be needed in your workspace, you may only want to fetch dependencies from Maven and include them
+in your archive along with all your configurations, scripts, binaries etc. for your installation.
 
 == Prerequisites
 
-The Cyclades Service Engine must be up and running on the nodes/servers that you wish to manage. Installing on the same machine you run this
-build from should work with no modifications. This should work on both *nix and Windows machines. If you are deploying to nodes/servers
-other than the same one that you are running this build from (localhost) you must modify the property "engines" in the file gradle.properties
-and enter the correct Cyclades URL for your target machine/s. You can specify one to N nodes/servers for deployment, as the "engines" property is a comma
-seperated list of Cyclades Service Engine URLs.
+The Cyclades Service Engine must be up and running on the nodes/servers that you wish to manage. Installing on the same machine from where you run this
+build should work with no modifications. This should work on both *nix and Windows machines. If you are deploying to nodes/servers
+other than the same one that you are running this build from (localhost) you must modify the property "node_list" in the file "gradle.properties"
+and enter the correct Cyclades URL/s for your target machine/s. You can specify one to N nodes/servers for deployment, as the "node_list" property is a comma
+separated list of Cyclades Service Engine URLs.
 
-You will need to have Gradle installed on the machine that you run this example from.
+You will need to have Gradle installed on the machine that you run this example from. You will also need to have Java installed
+to get a successful response from the test phase of the installation orchestration (though the build will still work without 
+it, it will simply fail during the test phase of the installation orchestration).
 
 [NOTE]
 Please see https://github.com/cycladessoa/cyclades-deployment to deploy a default Cyclades Service Engine installation.
 
+[NOTE]
+The default Cyclades Service Engine installation does not assign password protection for the "admin" and "exec" Nyxlets/services. If you add 
+simple password protection to these services (by adding a "password" field in "src/main/webapp/WEB-INF/admin/admin.properties" and/or 
+"src/main/webapp/WEB-INF/nyxlets/exec.properties" within your cyclades-deployment workspace) then you must enable and 
+set the fields "admin_service_password" and "exec_service_password" in the file "gradle.properties" of *this* workspace accordingly.
+
 == Instructions/Examples
 
-[NOTE]
-A deployment build command tyically start with "gradle clean build" so that the assembled deployment artifact is current. Exceptions will be 
-if and when "gradle backup" and "gradle rollBack" are run alone.
+=== Gradle Tasks
 
 * clean
     ** Deletes the build directory
@@ -73,24 +81,32 @@ if and when "gradle backup" and "gradle rollBack" are run alone.
 * backup
     ** Backup the current installation remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs
 * deploy
-    ** Upload and install this deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs
+    ** Upload, install and test this deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs
 * rollBack
-    ** Roll back a previously installed deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs. NOTE: You must specify the property "backup_tid" with the tid value from a previously run "backup" task: -Pbackup_tid=xxx
+    ** Roll back and test a previously installed deployment build remotely on the specified Cyclades Service Engine nodes in the node_list property, via provided HTTP APIs. NOTE: You must specify the property "backup_tid" with the tid value from a previously run "backup" task: -Pbackup_tid=xxx
 
 [NOTE]
-The command "Gradle tasks" will diplay all the available tasks of a Gradle build workspace...however the above tasks apply directly to this example
+The command "gradle tasks" will display all of the available tasks of a Gradle build workspace...however the above tasks apply directly to this example.
+A deployment build command typically start with "gradle clean build" so that the assembled deployment artifact (archive) is current. 
+Exceptions will be if and when "gradle backup" and "gradle rollBack" are run alone. 
 
 === Build, deploy, install and test the artifacts on the designated nodes/servers
 
+----
 gradle clean build deploy
+----
 
 === Build, backup, deploy, install and test the artifacts on the designated nodes/servers (a previous installation must be present for a "backup" task to succeed, otherwise it will throw an error)
 
+----
 gradle clean build backup deploy
+----
 
 === To roll back a to a previously backed up deployment (you must specifiy the tid of a previous "backup" execution as the command line property "backup_tid")
 
-gradle -Pbackup_tid=DEVOPS-DEPLOYMENT-BUILD-ARC-FZLYNG1-1364336231693 rollBack
+----
+gradle -Pbackup_tid=DEVOPS-DEPLOYMENT-BUILD-CLIENT-HOST-NAME-1364336231693 rollBack
+----
 
 [NOTE]
 The "backup_tid" value is diplayed by the "backup" task every time it is run. You can try running "gradle backup" alone to test this feature.
