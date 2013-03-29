@@ -52,7 +52,7 @@ task deploy () {
 def uploadArchive () {
     String faultStrategy = (exit_on_failure.equalsIgnoreCase("true")) ? "EXCEPTION" : "NOTHING";
     String password = (rootProject.hasProperty('admin_service_password')) ? admin_service_password : null
-    DevOps.uploadFIleToCluster(node_list.split("[,]"), password, source_archive_upload_path, target_node_archive_installation_path, true, faultStrategy, true)
+    DevOps.uploadFileToCluster(node_list.split("[,]"), password, source_archive_upload_path, target_node_archive_installation_path, true, faultStrategy, true)
 }
 
 def deployArchive () {
