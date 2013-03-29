@@ -53,8 +53,8 @@ in your archive along with all your configurations, scripts, binaries etc. for y
 
 The Cyclades Service Engine must be up and running on the nodes/servers that you wish to manage. Installing on the same machine from where you run this
 build should work with no modifications. This should work on both *nix and Windows machines. If you are deploying to nodes/servers
-other than the same one that you are running this build from (localhost) you must modify the property "engines" in the file "gradle.properties"
-and enter the correct Cyclades URL/s for your target machine/s. You can specify one to N nodes/servers for deployment, as the "engines" property is a comma
+other than the same one that you are running this build from (localhost) you must modify the property "node_list" in the file "gradle.properties"
+and enter the correct Cyclades URL/s for your target machine/s. You can specify one to N nodes/servers for deployment, as the "node_list" property is a comma
 separated list of Cyclades Service Engine URLs.
 
 You will need to have Gradle installed on the machine that you run this example from. You will also need to have Java installed
