@@ -53,6 +53,7 @@ jar.doFirst() {
     manifest {
         attributes 'Main-Class': 'HelloWorld'
         attributes 'Built-With': 'gradle-' + GradleVersion.current()
+        attributes 'Built-With-Java-Version': JavaVersion.current()
         attributes 'Built-By': System.getProperty('user.name')
     }
 }
